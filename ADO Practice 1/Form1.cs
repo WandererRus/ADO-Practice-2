@@ -18,6 +18,7 @@ namespace ADO_Practice_1
         SqlDataAdapter adapterGoods = null;
         SqlConnection connection = new SqlConnection();
         SqlCommandBuilder builder = null;
+        SqlCommandBuilder builder2 = null;
         SqlDataReader reader = null;
         DataSet dataSetGoods = new DataSet();
         DataSet dataSetCategory = new DataSet();
@@ -112,9 +113,18 @@ namespace ADO_Practice_1
                     dataSetCategory.Tables[0].Rows[dataGridView1.SelectedRows[0].Index].SetField(1, ec.tb_name.Text);                    
                 }
             }
-            else if (tabControl1.SelectedTab == tabPage2)
+            else if (tabControl1.SelectedTab == tabPage2 && dataGridView2.SelectedRows.Count > 0)
             {
-
+                DataRow editRow = dataSetGoods.Tables[0].Rows[dataGridView2.SelectedRows[0].Index];
+                EditGoods eg = new EditGoods((int)editRow[0], (string)editRow[1], (int)editRow[2], (int)editRow[3], (int)editRow[4]);
+                if (eg.ShowDialog() == DialogResult.OK)
+                {
+                    dataSetGoods.Tables[0].Rows[dataGridView2.SelectedRows[0].Index].SetField(0, Int32.Parse(eg.tb_id.Text));
+                    dataSetGoods.Tables[0].Rows[dataGridView2.SelectedRows[0].Index].SetField(1, eg.tb_name.Text);
+                    dataSetGoods.Tables[0].Rows[dataGridView2.SelectedRows[0].Index].SetField(2, Int32.Parse(eg.tb_cat_id.Text));
+                    dataSetGoods.Tables[0].Rows[dataGridView2.SelectedRows[0].Index].SetField(3, Int32.Parse(eg.tb_price.Text));
+                    dataSetGoods.Tables[0].Rows[dataGridView2.SelectedRows[0].Index].SetField(4, Int32.Parse(eg.tb_count.Text));
+                }
             }
         }
         private void удалитьToolStripMenuItem_Click(object sender, EventArgs e)
@@ -126,7 +136,8 @@ namespace ADO_Practice_1
             }
             else if (tabControl1.SelectedTab == tabPage2)
             {
-
+                if (dataGridView2.SelectedRows.Count > 0 && dataGridView2.SelectedRows[0].Cells[0].Value != null)
+                    dataSetGoods.Tables[0].Rows.RemoveAt(dataGridView2.SelectedRows[0].Index);
             }
         }
 
@@ -137,6 +148,12 @@ namespace ADO_Practice_1
             adapterCategory.InsertCommand = builder.GetInsertCommand();
             adapterCategory.UpdateCommand = builder.GetUpdateCommand();
             adapterCategory.Update(dataSetCategory);
+
+            builder2 = new SqlCommandBuilder(adapterGoods);
+            adapterGoods.DeleteCommand = builder2.GetDeleteCommand();
+            adapterGoods.InsertCommand = builder2.GetInsertCommand();
+            adapterGoods.UpdateCommand = builder2.GetUpdateCommand();
+            adapterGoods.Update(dataSetGoods);
         }
     }
 }
