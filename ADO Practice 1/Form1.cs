@@ -57,33 +57,46 @@ namespace ADO_Practice_1
 
         private void добавитьToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (tabControl1.SelectedTab == tabPage1)
+            try
             {
-                int lastid = 1;
-                if (dataSetCategory.Tables[0].Rows.Count > 0)
+                if (tabControl1.SelectedTab == tabPage1)
                 {
-                    lastid = (int)dataSetCategory.Tables[0].Rows[dataSetCategory.Tables[0].Rows.Count - 1][0] + 1;
+                    int lastid = 1;
+                    if (dataSetCategory.Tables[0].Rows.Count > 0)
+                    {
+                        lastid = (int)dataSetCategory.Tables[0].Rows[dataSetCategory.Tables[0].Rows.Count - 1][0] + 1;
+                    }
+                    AddCategory ac = new AddCategory(lastid);
+                    if (ac.ShowDialog() == DialogResult.OK)
+                    {
+                        dataSetCategory.Tables[0].Rows.Add(Int32.Parse(ac.tb_id.Text), ac.tb_name.Text);
+                    }
+                    ac.Dispose();
                 }
-                AddCategory ac = new AddCategory(lastid);
-                if (ac.ShowDialog() == DialogResult.OK)
+                else if (tabControl1.SelectedTab == tabPage2)
                 {
-                    dataSetCategory.Tables[0].Rows.Add(Int32.Parse(ac.tb_id.Text), ac.tb_name.Text);                                     
+                    int lastid = 1;
+                    if (dataSetGoods.Tables[0].Rows.Count > 0)
+                    {
+                        lastid = (int)dataSetGoods.Tables[0].Rows[dataSetGoods.Tables[0].Rows.Count - 1][0] + 1;
+                    }
+                    AddGoods ag = new AddGoods(lastid);
+                    if (ag.ShowDialog() == DialogResult.OK)
+                    {
+                        dataSetGoods.Tables[0].Rows.Add(
+                            Int32.Parse(ag.tb_id.Text), 
+                            ag.tb_name.Text, 
+                            Int32.Parse(ag.tb_cat_id.Text),
+                            Int32.Parse(ag.tb_price.Text),
+                            Int32.Parse(ag.tb_count.Text)
+                            );
+                    }
+                    ag.Dispose();
                 }
-                ac.Dispose();
             }
-            else if (tabControl1.SelectedTab == tabPage2)
+            catch (Exception ex)
             {
-                int lastid = 1;
-                if (dataSetGoods.Tables[0].Rows.Count > 0)
-                {
-                    lastid = (int)dataSetGoods.Tables[0].Rows[dataSetGoods.Tables[0].Rows.Count - 1][0] + 1;
-                }
-                AddGoods ag = new AddGoods(lastid);
-                if (ag.ShowDialog() == DialogResult.OK)
-                {
-                    dataSetGoods.Tables[0].Rows.Add(Int32.Parse(ag.tb_id.Text), ag.tb_name.Text);
-                }
-                ag.Dispose();
+                ts_status.Text = ex.Message;
             }
         }
 
