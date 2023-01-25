@@ -87,6 +87,7 @@ namespace ADO_Practice_1
                 dataSetCategory = new DataSet();
                 dataSetGoods = new DataSet();
             }
+            //WAITFOR DELAY '00:00:05';
             connection.ConnectionString = ConfigurationManager.ConnectionStrings["MSSQL"].ConnectionString;
             try 
             {
