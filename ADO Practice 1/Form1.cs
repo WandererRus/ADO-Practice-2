@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.Common;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Data.SqlClient;
 using System.Configuration;
+using System.Threading;
 
 namespace ADO_Practice_1
 {
@@ -17,6 +19,7 @@ namespace ADO_Practice_1
         SqlDataAdapter adapterCategory = null;
         SqlDataAdapter adapterGoods = null;
         SqlConnection connection = new SqlConnection();
+        SqlConnection connectionAsync = new SqlConnection();
         SqlCommandBuilder builder = null;
         SqlCommandBuilder builder2 = null;
         SqlDataReader reader = null;
@@ -29,13 +32,61 @@ namespace ADO_Practice_1
             
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
-
+            try 
+            {
+                connectionAsync.ConnectionString = ConfigurationManager.ConnectionStrings["MSSQL"].ConnectionString;
+                connectionAsync.ConnectionString += ";Asynchronous Processing=true";
+                await connectionAsync.OpenAsync();
+                SqlCommand sqlcomm = new SqlCommand("WAITFOR DELAY '00:00:05';select * from Category", connectionAsync);
+                reader = await sqlcomm.ExecuteReaderAsync();
+                    if (reader != null)
+                    {
+                        int line = 0;
+                        do
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                if (line == 0)  
+                                {
+                                    for (int i = 0; i < reader.FieldCount; i++)
+                                    {
+                                        dataGridView1.Columns.Add(reader.GetName(i).ToString(), reader.GetName(i).ToString());
+                                    }                                
+                                }                            
+                                line++;
+                                dataGridView1.Rows.Add(reader[0].ToString(),reader[1].ToString());
+                            }                           
+                        } while (await reader.NextResultAsync());
+                    }                
+            }
+            catch ( Exception ex) 
+            {
+                ts_status.Text = ex.Message;
+            }
+            finally
+            { 
+                connectionAsync.Close(); 
+            }            
         }
 
         private void подключитьсяКБдToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (adapterCategory == null || adapterGoods == null)
+            {
+                dataGridView1.Rows.Clear();
+                dataGridView1.Columns.Clear();
+                dataGridView2.Rows.Clear();
+                dataGridView2.Columns.Clear();
+            }
+            else
+            {
+                adapterCategory = null;
+                adapterGoods = null;
+                dataSetCategory = new DataSet();
+                dataSetGoods = new DataSet();
+            }
             connection.ConnectionString = ConfigurationManager.ConnectionStrings["MSSQL"].ConnectionString;
             try 
             {
@@ -143,17 +194,21 @@ namespace ADO_Practice_1
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            builder = new SqlCommandBuilder(adapterCategory);
-            adapterCategory.DeleteCommand = builder.GetDeleteCommand();
-            adapterCategory.InsertCommand = builder.GetInsertCommand();
-            adapterCategory.UpdateCommand = builder.GetUpdateCommand();
-            adapterCategory.Update(dataSetCategory);
+            DialogResult dr = MessageBox.Show("Сохранить данные работы в бд?", "Обновление бд", MessageBoxButtons.OKCancel);
+            if (dr == DialogResult.OK && adapterGoods !=null && adapterCategory != null)
+            {
+                builder = new SqlCommandBuilder(adapterCategory);
+                adapterCategory.DeleteCommand = builder.GetDeleteCommand();
+                adapterCategory.InsertCommand = builder.GetInsertCommand();
+                adapterCategory.UpdateCommand = builder.GetUpdateCommand();
+                adapterCategory.Update(dataSetCategory);
 
-            builder2 = new SqlCommandBuilder(adapterGoods);
-            adapterGoods.DeleteCommand = builder2.GetDeleteCommand();
-            adapterGoods.InsertCommand = builder2.GetInsertCommand();
-            adapterGoods.UpdateCommand = builder2.GetUpdateCommand();
-            adapterGoods.Update(dataSetGoods);
+                builder2 = new SqlCommandBuilder(adapterGoods);
+                adapterGoods.DeleteCommand = builder2.GetDeleteCommand();
+                adapterGoods.InsertCommand = builder2.GetInsertCommand();
+                adapterGoods.UpdateCommand = builder2.GetUpdateCommand();
+                adapterGoods.Update(dataSetGoods);
+            }
         }
     }
 }
